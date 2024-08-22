@@ -2,8 +2,9 @@ import { registerUser } from '../../domain/entities/signUpUser';
 import {UserDocument} from '../database/model/userModel';
 
 export interface UserLoginResponse {
-    token: string;
-    userDoc: UserDocument;
+    token?: string;
+    userDoc?: UserDocument;
+    error?: string;
   }
 export interface IUserRepository {
     findUserExists(email:string): Promise<UserDocument | null>;
@@ -15,4 +16,5 @@ export interface IUserRepository {
     emailVerify(email:string): Promise<any|null>
     forgotOtpVerify(otp:string,email:string) : Promise<UserDocument|null>
     isBlockDb(email:string,isBlocked:boolean) : Promise<UserDocument|null>
+    passwordReseted(email:string, password:string): Promise<Boolean| null>
 }

@@ -7,7 +7,10 @@ import router from "./presentation/routes/userRouter";
 // import passportConfig from "../src/auth/passport";
 // import passport from "passport";
 import session from "express-session";
-
+import runProducer from "./infastructure/kafka/producer";
+import { setupRabbitMQ } from "./infastructure/rabitMQ/producer";
+import { connectToRabbitMQ } from "./infastructure/rabitMQ/consumer";
+import { errorMiddleware } from "../src/middleware/errorMiddleware"; 
 
 database();
 // passportConfig()
@@ -28,6 +31,16 @@ app.use(session({
 app.use(cors());
 
 app.use("/user-service", router);
+
+app.use(errorMiddleware);
+
+// runProducer().catch(console.error);
+
+setupRabbitMQ((channel) => {
+  console.log('RabbitMQ is set up and ready.');
+});
+
+connectToRabbitMQ('Queue2')
 
 app.listen(PORT, () => {
   console.log(`server is runnign ${PORT}`);

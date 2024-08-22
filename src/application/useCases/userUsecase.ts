@@ -3,6 +3,7 @@ import otpSending from "../../utils/otpSending";
 import { registerUser } from "../../domain/entities/signUpUser";
 import { IUserRepository } from "../../infastructure/interface/IUserRepository";
 import { IuserUsecase } from "../interface/IuserUsecase";
+import { publishMessage } from "../../infastructure/rabitMQ/producer";
 
 
 export class UserUsecase implements IuserUsecase {
@@ -34,7 +35,7 @@ export class UserUsecase implements IuserUsecase {
 
     const userData = await this.repository.otpVerify(otp);
     console.log("userdaaaaaaaa", userData);
-
+    publishMessage(userData)
     return userData ? userData : null;
   }
   async loginVerfication(email: string, password: string) {
@@ -43,8 +44,6 @@ export class UserUsecase implements IuserUsecase {
     if (!checkUser) {
       return null;
     }
-    console.log("checkUser",checkUser);
-    
     return checkUser;
   }
 
@@ -88,11 +87,19 @@ export class UserUsecase implements IuserUsecase {
     
     return null
   }
-  async isBlock(email:string,isBlocked:boolean){
+  // async isBlock(email:string,isBlocked:boolean){
 
-    const checking = await this.repository.isBlockDb(email,isBlocked);
-    console.log('user issss',checking);
-   return checking ? checking : null
+  //   const checking = await this.repository.isBlockDb(email,isBlocked);
+  //   console.log('user issss',checking);
+  //  return checking ? checking : null
+  // }
+
+  async resetingPassword(email:string, password:string){
+    const result = await this.repository.passwordReseted(email,password);
+    if(!result){
+      return false
+    }
+    return true
   }
 
 }

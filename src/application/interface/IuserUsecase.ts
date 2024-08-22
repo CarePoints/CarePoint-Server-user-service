@@ -3,8 +3,9 @@ import { registerUser } from "../../domain/entities/signUpUser";
 import {UserDocument} from '../../infastructure/database/model/userModel'
 
 export interface UserLogin{
-    token: string;
-    userDoc: UserDocument;
+    token?: string;
+    userDoc?: UserDocument;
+    error?: string;
 }
 
 export interface IuserUsecase {
@@ -16,6 +17,6 @@ export interface IuserUsecase {
     refreshTokenUsecase(oldToken:string): Promise<UserLogin| null>
     emailVerification(email:string): Promise<registerUser| null>
     forgotOtp(otp:string,email:string): Promise<returnUser|null>
-    isBlock(email:string,isBlocked:boolean): Promise<returnUser|null>
-  
+    // isBlock(email:string,isBlocked:boolean): Promise<returnUser|null>
+    resetingPassword(email:string,password:string): Promise<Boolean | null>
 }

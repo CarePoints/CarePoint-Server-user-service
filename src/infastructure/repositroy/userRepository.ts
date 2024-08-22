@@ -8,7 +8,6 @@ import { registerUser } from "../../domain/entities/signUpUser";
 import { User } from "../database/model/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import bcrypt from "bcrypt";
-import mongoose from "mongoose";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -102,24 +101,18 @@ export class UserRepository implements IUserRepository {
       const userDoc = await User.findOne({ email });
 
       if (!userDoc) {
-        return null;
+        return { error: 'Email is not found' };
       }
 
       if (!userDoc.password) {
-        return null;
+        return { error: 'No password set for this user' };
       }
       let hashedPass = userDoc.password;
       const isMatch = await bcrypt.compare(password, hashedPass);
 
       if (!isMatch) {
-        return null;
+        return { error: 'Invalid password' };
       }
-
-      // if(userDoc.isBlocked){
-      //   console.log('user is blocked');
-      //   return null;
-      // }
-
       const user = {
         _id: userDoc._id,
         email: userDoc.email,
@@ -128,9 +121,9 @@ export class UserRepository implements IUserRepository {
       const token = generateToken(user);
       return { token, userDoc };
     } catch (err) {
-      console.log("error", err);
+      console.error("error", err);
+      return { error: 'An unexpected error occurred' };  
     }
-    return null;
   }
 
   async getUserById(userId: string) {
@@ -193,7 +186,7 @@ export class UserRepository implements IUserRepository {
   }
   async isBlockDb(email: string, isBlocked: boolean) {
     const user = await User.findOne({ email });
-    console.log("sucess ", user);
+    console.log("sucess ", isBlocked);
 
     if (!user) {
       return null;
@@ -203,5 +196,19 @@ export class UserRepository implements IUserRepository {
     console.log("last", user);
 
     return user;
+  }
+  async passwordReseted(email:string, password:string){
+    const user = await User.findOne({email});
+    if(!user){
+      return false
+    }
+    
+    let newPassword = await hashPassword(password);
+    console.log('hashed pass',newPassword);
+    
+    user.password = newPassword;
+    await user.save()
+    console.log('3w34343', user);
+    return true
   }
 }

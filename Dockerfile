@@ -1,20 +1,16 @@
-# Use the official Node.js image from the Docker Hub
-FROM node:14
+# Dockerfile for User Service
+FROM node:18
 
-# Create and set the working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose port 4000 to access the service
-EXPOSE 4000
+RUN npm install -g typescript
+RUN tsc
 
-# Run the application
-CMD ["node", "server.js"]
+EXPOSE 3000
+
+CMD ["node", "dist/server.js"]

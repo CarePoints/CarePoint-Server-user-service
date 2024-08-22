@@ -23,11 +23,10 @@ export class UserController {
       return res.status(200).json({ message: response });
     } else {
       const response = await this.userUsecase.registerUser(values);
-      console.log("responsedkfjkfbhfkjgbhfjk", response);
-
       return res.status(200).json({ message: response });
     }
   }
+
   async otpConfirm(req: Request, res: Response, next: NextFunction) {
     console.log("Otp Controller working");
 
@@ -50,10 +49,12 @@ export class UserController {
       const result = await this.userUsecase.loginVerfication(email, password);
       console.log("User data:", result);
 
-      if (result) {
+      if (result && "error" in result) {
+        res.json({ error: result.error });
+      } else if (result) {
         res.status(200).json({ user: result.userDoc, token: result.token });
       } else {
-        res.status(401).json({ message: "User is not exits" });
+        res.status(400).json({ message: "Unexpected error occurred" });
       }
     } catch (error) {
       console.error("Error during login:", error);
@@ -92,7 +93,6 @@ export class UserController {
     if (!result) {
       return res.status(404).json({ message: "User not found" });
     }
-
     res.status(200).json({ user: result });
   }
 
@@ -135,16 +135,29 @@ export class UserController {
     }
     return res.status(200).json({ message: "Otp is correct" });
   }
-  async isBlock(req: Request, res: Response) {
-    console.log("eeeee", req.body);
-    const { email, isBlocked } = req.body;
-    console.log("eeeeeaaa", isBlocked);
 
-    const user = await this.userUsecase.isBlock(email, isBlocked);
 
-    if (!user) {
-      return res.status(400).json({ message: "Block failed" });
+  // async isBlock(req: Request, res: Response) {
+  //   console.log("eeeee", req.body);
+  //   const { email, isBlocked } = req.body;
+  //   console.log("eeeeeaaa", isBlocked);
+
+  //   const user = await this.userUsecase.isBlock(email, isBlocked);
+
+  //   if (!user) {
+  //     return res.status(400).json({ message: "Block failed" });
+  //   }
+  //   return res.status(200).json({ message: "Block Changed" });
+  // }
+
+  async resetPassword(req:Request,res:Response){
+    console.log('userrrrrrrrrrrrr',req.body);
+    const {email,password} = req.body;
+    const result = await this.userUsecase.resetingPassword(email,password)
+    if(!result){
+      return res.status(400).json({ success: false, message: 'Failed to reset password' });
     }
-    return res.status(200).json({ message: "Block Changed" });
+    return res.status(200).json({ success: true, message: 'Password reset successfully' });
   }
 }
+
