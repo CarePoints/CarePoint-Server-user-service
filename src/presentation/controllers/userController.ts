@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { IuserUsecase } from "../../application/interface/IuserUsecase";
+import { generateToken } from "../../utils/authUtlis";
+import Razorpay from "razorpay";
 
 export class UserController {
   private userUsecase: IuserUsecase;
@@ -8,44 +10,52 @@ export class UserController {
   }
 
   async registerUser(req: Request, res: Response, next: NextFunction) {
-    console.log("Contoller");
+    try {
+      const { firstname, lastname, email, password, phonenumber, role } =
+        req.body;
+      const values = {
+        firstname,
+        lastname,
+        email,
+        password,
+        phonenumber,
+        role,
+      };
+      console.log("values.email", email);
 
-    const { firstname, lastname, email, password, phonenumber, role } =
-      req.body;
-    const values = { firstname, lastname, email, password, phonenumber, role };
-    console.log("values.email", email);
+      const existingUser = await this.userUsecase.userExists(email);
 
-    const existingUser = await this.userUsecase.userExists(email);
-
-    if (existingUser) {
-      console.log("existesing ");
-      const response = await this.userUsecase.registerUser(values);
-      return res.status(200).json({ message: response });
-    } else {
-      const response = await this.userUsecase.registerUser(values);
-      return res.status(200).json({ message: response });
+      if (existingUser) {
+        console.log("existesing ");
+        const response = await this.userUsecase.registerUser(values);
+        return res.status(200).json({ message: response });
+      } else {
+        const response = await this.userUsecase.registerUser(values);
+        return res.status(200).json({ message: response });
+      }
+    } catch (error) {
+      next(error);
     }
   }
 
   async otpConfirm(req: Request, res: Response, next: NextFunction) {
-    console.log("Otp Controller working");
-
-    let values = req.body;
-    const user = await this.userUsecase.otpVerification(values);
-    console.log("user is avbaaa", user);
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired Otp " });
+    try {
+      let values = req.body;
+      const user = await this.userUsecase.otpVerification(values);
+      if (!user) {
+        return res.status(400).json({ message: "Invalid or expired Otp " });
+      }
+      return res
+        .status(200)
+        .json({ message: "Otp Verification Successfully", user });
+    } catch (error) {
+      next(error);
     }
-    return res
-      .status(200)
-      .json({ message: "Otp Verification Successfully", user });
   }
 
   async login(req: Request, res: Response, next: NextFunction) {
-    console.log("login is working");
-    const { email, password } = req.body;
-
     try {
+      const { email, password } = req.body;
       const result = await this.userUsecase.loginVerfication(email, password);
       console.log("User data:", result);
 
@@ -57,107 +67,156 @@ export class UserController {
         res.status(400).json({ message: "Unexpected error occurred" });
       }
     } catch (error) {
-      console.error("Error during login:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      next(error);
     }
   }
 
-  // async googleCallback(req: Request, res: Response, next: NextFunction) {
-  //   try {
-  //     // Check if the user is authenticated
-  //     if (req.user) {
-  //       // Set user details in a cookie
-  //       res.cookie("user", JSON.stringify(req.user));
+  async googleCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      console.log('Google callback is working');
+      
+      if (req.user) {
+        let user = req.user
+        const token = await this.userUsecase.googleRetriveData({user})
 
-  //       // Redirect to the desired React route
-  //       res.redirect("http://localhost:3000/user/Home"); // Adjust the URL as needed
-  //     } else {
-  //       // If authentication fails, redirect to login or error page
-  //       res.redirect("http://localhost:3000/login"); // Adjust the URL as needed
-  //     }
-  //   } catch (error) {
-  //     // Handle errors
-  //     console.error("Error during Google callback:", error);
-  //     res.redirect("http://localhost:3000/error"); // Redirect to an error page
-  //   }
+        const userData = encodeURIComponent(JSON.stringify(req.user));
+        const tokenData = encodeURIComponent(JSON.stringify(token));
+        res.redirect(`http://localhost:3000/login?user=${userData}&token=${tokenData}`);
+
+      } else {
+        res.redirect("http://localhost:3000/login");
+      }
+    } catch (error) {
+      console.error("Error during Google callback:", error);
+      res.redirect("http://localhost:3000/error");
+    }
+  }
+  
+
+  // async handleGooglePassport(req: Request, res: Response){
+  //   console.log('handlgeGOoggle parsoport is working',req.body);
+    
   // }
 
-  async getUserID(req: Request, res: Response, next: NextFunction) {
-    const userId = req.usersData?.id;
 
-    if (!userId) {
-      return res.status(404).json({ message: "User ID not found" });
+
+  async getUserID(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.usersData?.id;
+
+      if (!userId) {
+        return res.status(404).json({ message: "User ID not found" });
+      }
+      // Replace with actual logic to get user
+      const result = await this.userUsecase.getUser(userId);
+      if (!result) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({ user: result });
+    } catch (error) {
+      next(error);
     }
-    // Replace with actual logic to get user
-    const result = await this.userUsecase.getUser(userId);
-    if (!result) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    res.status(200).json({ user: result });
   }
 
   async refreshToken(req: Request, res: Response, next: NextFunction) {
-    console.log("login is working");
-    const { oldToken } = req.body;
-    const result = await this.userUsecase.refreshTokenUsecase(oldToken);
+    try {
+      const { oldToken } = req.body;
+      const result = await this.userUsecase.refreshTokenUsecase(oldToken);
 
-    if (result) {
-      console.log("refresh token is workkingggggggggggg", result);
-
-      res.status(200).json({ user: result.userDoc, token: result.token });
-    } else {
-      res.status(401).json({ message: "User is not exits" });
+      if (result) {
+        res.status(200).json({ user: result.userDoc, token: result.token });
+      } else {
+        res.status(401).json({ message: "User is not exits" });
+      }
+    } catch (error) {
+      next(error);
     }
   }
 
   async checkEmail(req: Request, res: Response, next: NextFunction) {
-    let { email } = req.body.email;
-    console.log("eemail isssssssssss", email);
-    const result = await this.userUsecase.emailVerification(email);
-    console.log("ree", result);
+    try {
+      let { email } = req.body.email;
+      const result = await this.userUsecase.emailVerification(email);
 
-    if (!result) {
-      return res.status(400).json({ message: "User not found" });
+      if (!result) {
+        return res.status(400).json({ message: "User not found" });
+      }
+
+      const response = await this.userUsecase.registerUser(result);
+      return res.status(200).json({ message: "Otp send successfully" });
+    } catch (error) {
+      next(error);
     }
-
-    const response = await this.userUsecase.registerUser(result);
-    console.log("response", response);
-    return res.status(200).json({ message: "Otp send successfully" });
   }
 
   async forgotPassword(req: Request, res: Response, next: NextFunction) {
-    console.log("eeeee", req.body);
-    const { otp, email } = req.body;
-    const user = await this.userUsecase.forgotOtp(otp, email);
-    console.log("user", user);
-    if (!user) {
-      return res.status(400).json({ message: "Otp is not correct" });
+    try {
+      const { otp, email } = req.body;
+      const user = await this.userUsecase.forgotOtp(otp, email);
+      if (!user) {
+        return res.status(400).json({ message: "Otp is not correct" });
+      }
+      return res.status(200).json({ message: "Otp is correct" });
+    } catch (error) {
+      next(error);
     }
-    return res.status(200).json({ message: "Otp is correct" });
   }
 
-
-  // async isBlock(req: Request, res: Response) {
-  //   console.log("eeeee", req.body);
-  //   const { email, isBlocked } = req.body;
-  //   console.log("eeeeeaaa", isBlocked);
-
-  //   const user = await this.userUsecase.isBlock(email, isBlocked);
-
-  //   if (!user) {
-  //     return res.status(400).json({ message: "Block failed" });
-  //   }
-  //   return res.status(200).json({ message: "Block Changed" });
-  // }
-
-  async resetPassword(req:Request,res:Response){
-    console.log('userrrrrrrrrrrrr',req.body);
-    const {email,password} = req.body;
-    const result = await this.userUsecase.resetingPassword(email,password)
-    if(!result){
-      return res.status(400).json({ success: false, message: 'Failed to reset password' });
+  async resetPassword(req: Request, res: Response) {
+    try {
+      const { email, password } = req.body;
+      const result = await this.userUsecase.resetingPassword(email, password);
+      if (!result) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Failed to reset password" });
+      }
+      return res
+        .status(200)
+        .json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+      console.log("reset password is failed", error);
     }
-    return res.status(200).json({ success: true, message: 'Password reset successfully' });
+  }
+
+  async appoinments(req:Request, res:Response){
+    try{
+      const {selectedDoctor,Date,Time,appointmentType,user} = req.body;
+      let userData = JSON.parse( user)
+      const result = await this.userUsecase.savingAppoinments(selectedDoctor,Date,Time,userData,appointmentType)
+      if(!result){
+        return res.status(400).json({message:'Appoinment failed'})
+      }
+      console.log('result',result);
+      
+      return res.status(200).json({message:'Appoinment sucess',result})
+    }catch(error){
+      console.log('error is',error);
+    }
+  }
+  async razorpayPayments(req:Request, res:Response){
+    try{
+      let {amount} = req.body;
+      console.log('amount',amount)
+      var instance = new Razorpay({ key_id : process.env.KEY_ID as string, key_secret: process.env.KEY_SECRET as string})
+
+      let order = await instance.orders.create({
+        amount: amount * 100,
+        currency: "INR",
+        receipt: "receipt#1"
+      })
+      res.status(200).json({success:true,order,amount})
+    }catch(error){
+      console.log('error is',error);
+    }
+  }
+  async bookedDoctors(req:Request, res:Response){
+    try{
+      let result = await this.userUsecase.findBookedDoctors()
+      
+      return res.status(200).json({message:'succees', result})
+    }catch(error){
+      console.log('error is',error);
+    }
   }
 }
-

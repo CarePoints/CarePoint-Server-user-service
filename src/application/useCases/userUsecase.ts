@@ -4,7 +4,9 @@ import { registerUser } from "../../domain/entities/signUpUser";
 import { IUserRepository } from "../../infastructure/interface/IUserRepository";
 import { IuserUsecase } from "../interface/IuserUsecase";
 import { publishMessage } from "../../infastructure/rabitMQ/producer";
-
+import { generateToken } from "../../utils/authUtlis";
+import { IAppointment, IDoctor } from "../../infastructure/database/model/appoinments";
+import { publishMessageForAppoinment } from "../../infastructure/rabitMQ/appoinmentProducer";
 
 export class UserUsecase implements IuserUsecase {
   private repository: IUserRepository;
@@ -34,12 +36,10 @@ export class UserUsecase implements IuserUsecase {
     console.log("Otp useCase working", otp);
 
     const userData = await this.repository.otpVerify(otp);
-    console.log("userdaaaaaaaa", userData);
-    publishMessage(userData)
+    publishMessage(userData);
     return userData ? userData : null;
   }
   async loginVerfication(email: string, password: string) {
-    console.log("Login verification on usecase", email);
     const checkUser = await this.repository.userLogin(email, password);
     if (!checkUser) {
       return null;
@@ -60,32 +60,30 @@ export class UserUsecase implements IuserUsecase {
       return null;
     }
     const checkToken = await this.repository.refreashToken(oldToken);
-    if(!checkToken){
-        return null
-    }else{
-        console.log('refresh token creaedd usecase');
-        
-        return checkToken
+    if (!checkToken) {
+      return null;
+    } else {
+      console.log("refresh token creaedd usecase");
+
+      return checkToken;
     }
   }
 
-  async emailVerification(email:string){
+  async emailVerification(email: string) {
     const user = await this.repository.emailVerify(email);
-    if(!user){
-      return null
+    if (!user) {
+      return null;
     }
-    return user
+    return user;
   }
 
-  async forgotOtp(otp:string,email:string){
-    console.log('otp',otp,'email',email);
-    const checking = await this.repository.forgotOtpVerify(otp,email);
-    console.log('user issss',checking);
-    if(checking){
-      return checking
+  async forgotOtp(otp: string, email: string) {
+    const checking = await this.repository.forgotOtpVerify(otp, email);
+    if (checking) {
+      return checking;
     }
-    
-    return null
+
+    return null;
   }
   // async isBlock(email:string,isBlocked:boolean){
 
@@ -94,12 +92,36 @@ export class UserUsecase implements IuserUsecase {
   //  return checking ? checking : null
   // }
 
-  async resetingPassword(email:string, password:string){
-    const result = await this.repository.passwordReseted(email,password);
+  async resetingPassword(email: string, password: string) {
+    const result = await this.repository.passwordReseted(email, password);
+    if (!result) {
+      return false;
+    }
+    return true;
+  }
+
+  async googleRetriveData(user:any){
+    console.log('userewrwe',user);
+    publishMessage(user)
+    if(user){
+      let {_id,email} = user
+      let token = generateToken({_id,email})
+      console.log('tokenfdsafsafdas',token);
+      
+      return token
+    }
+  }
+
+  async savingAppoinments(selectedDoctor:IDoctor,Date:string,Time:string,user:IAppointment,appointmentType:string){
+    const result = await this.repository.savingAppoinmentsDB(selectedDoctor,Date,Time,user,appointmentType);
+    publishMessageForAppoinment(selectedDoctor,Date,Time,user,appointmentType)
     if(!result){
       return false
     }
-    return true
+    return result
   }
-
+  async findBookedDoctors(){
+    const result = await this.repository.getBookedDoctors();
+    return result
+  }
 }

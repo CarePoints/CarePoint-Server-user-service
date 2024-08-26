@@ -1,7 +1,7 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import dotenv from "dotenv";
-import { User, UserDocument } from "../infastructure/database/model/userModel"; // Ensure the correct path to your User model
+import { User, UserDocument } from "../infastructure/database/model/userModel"; 
 
 dotenv.config();
 
@@ -25,12 +25,14 @@ const passportConfig = () => {
   passport.use(
     new GoogleStrategy(
       {
-        callbackURL: "/user-service/google/redirect",
+        callbackURL: "/user-service/auth/google/callback",
         clientID: process.env.GOOGLE_AUTH_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET as string,
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          console.log('passport configatuation is worki');
+          
           let user = await User.findOne({ email: profile._json.email });
 
           if (user) {

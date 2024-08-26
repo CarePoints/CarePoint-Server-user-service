@@ -1,4 +1,5 @@
 import { registerUser } from '../../domain/entities/signUpUser';
+import { IAppointment, IDoctor } from '../database/model/appoinments';
 import {UserDocument} from '../database/model/userModel';
 
 export interface UserLoginResponse {
@@ -17,4 +18,6 @@ export interface IUserRepository {
     forgotOtpVerify(otp:string,email:string) : Promise<UserDocument|null>
     isBlockDb(email:string,isBlocked:boolean) : Promise<UserDocument|null>
     passwordReseted(email:string, password:string): Promise<Boolean| null>
+    savingAppoinmentsDB(selectedDoctor:IDoctor,Date:string,Time:string,user:IAppointment,appointmentType:string): Promise<Boolean | any | null>
+    getBookedDoctors(): Promise<any|null>
 }
