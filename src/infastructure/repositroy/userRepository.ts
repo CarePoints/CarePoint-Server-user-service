@@ -9,7 +9,13 @@ import { User } from "../database/model/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
 import bcrypt from "bcrypt";
 import { AppError } from "../../middleware/errorMiddleware";
-import Appointment, { IAppointment, IDoctor } from "../database/model/appoinments";
+import Appointment, {
+  IAppointment,
+  IDoctor,
+} from "../database/model/appoinments";
+import Medicine, { IMedicine } from "../database/model/medicines";
+import cartCollection from "../database/model/cart";
+import products from "razorpay/dist/types/products";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -244,7 +250,6 @@ export class UserRepository implements IUserRepository {
     user: IAppointment,
     appointmentType: string
   ) {
-  
     try {
       const newAppointment = new Appointment({
         userId: user._id,
@@ -262,19 +267,172 @@ export class UserRepository implements IUserRepository {
         date: Date,
         time: Time,
       });
-  
+
       await newAppointment.save();
-      if(!newAppointment){
+      if (!newAppointment) {
         return false;
       }
-      return newAppointment
+      return newAppointment;
     } catch (error) {
-      console.error('Error saving appointment:', error);
+      console.error("Error saving appointment:", error);
       return false;
     }
   }
-  async getBookedDoctors(){
-    let result = await Appointment.find();    
+  async getBookedDoctors() {
+    let result = await Appointment.find();
+    if (!result) {
+      return null;
+    }
+    return result;
+  }
+  async cancelBookingRepo(cancelDoctor: string) {
+    try {
+      console.log("Attempting to delete appointment for:", cancelDoctor);
+
+      // Make sure the email field in the database matches the one used in the query
+      let result = await Appointment.findOneAndDelete({
+        "doctor.email": cancelDoctor,
+      }).exec();
+
+      if (result) {
+        console.log("Appointment found: And Deleted", result);
+      } else {
+        console.log("No appointment found for this email.");
+        return null;
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error finding appointment:", error);
+      throw new Error("Error finding appointment.");
+    }
+  }
+  async appointmentAcceptedRepo(doctorEmail: string, userEmail: string) {
+    try {
+      // Fetch the appointment that matches both doctor email and userId
+      const userData = await User.findOne({ email: userEmail });
+      if (!userData) {
+        return null;
+      }
+      let result = await Appointment.findOne({
+        "doctor.email": doctorEmail,
+        userId: userData._id,
+      });
+
+      console.log("Result:", result);
+
+      // If no result is found, return false
+      if (!result) {
+        console.log("No appointment found matching the criteria.");
+        return false;
+      }
+
+      // Update the status to 'confirmed'
+      result.status = "confirmed";
+      await result.save();
+
+      return true;
+    } catch (error) {
+      console.error("Error finding appointment:", error);
+      throw new Error("Error finding appointment.");
+    }
+  }
+
+  async appointmentRejected(doctorEmail: string, userEmail: string) {
+    try {
+      // Fetch the appointment that matches both doctor email and userId
+      const userData = await User.findOne({ email: userEmail });
+      if (!userData) {
+        return null;
+      }
+      let result = await Appointment.findOne({
+        "doctor.email": doctorEmail,
+        userId: userData._id,
+      });
+
+      console.log("Result:", result);
+
+      // If no result is found, return false
+      if (!result) {
+        console.log("No appointment found matching the criteria.");
+        return false;
+      }
+
+      // Update the status to 'confirmed'
+      result.status = "canceled";
+      await result.save();
+
+      return true;
+    } catch (error) {
+      console.error("Error finding appointment:", error);
+      throw new Error("Error finding appointment.");
+    }
+  }
+
+  async addMedicines(file: any, productData: any) {
+    console.log("productData is", productData, "file is", file);
+    const addMedicines = new Medicine({
+      name: productData.name,
+      category: productData.category,
+      price: productData.price,
+      stock: productData.stock,
+      dosage: productData.dosage,
+      expiryDate: productData.expiryDate,
+      sideEffects: productData.sideEffects,
+      productName: productData.productName,
+      productImage: file.location,
+    });
+
+    await addMedicines.save();
+    console.log("addMedicines successs", addMedicines);
+  }
+
+  async medicinesRepo() {
+    const result = await Medicine.find();
+    console.log("get result is ", result);
+    if (!result) return null;
+    return result;
+  }
+  async addToCartRepo(userId: string, medicineId: string) {
+    const medicine = await Medicine.findById(medicineId);
+
+    if (!medicine) {
+      return null;
+    }
+
+    let cart = await cartCollection.findOne({
+      userid: userId,
+      productid: medicineId,
+    });
+    if (!cart) {
+      const newCart = new cartCollection({
+        userid: userId,
+        productid: medicineId,
+        productName: medicine.name,
+        price: medicine.price,
+        catogory: medicine.category,
+        quantity: 1,
+        dosage: medicine.dosage,
+        image: medicine.productImage,
+        expiryDate: medicine.expiryDate,
+        sideEffects: medicine.sideEffects,
+        totalPrice: medicine.price,
+      });
+
+      await newCart.save();
+
+      console.log("cart is", newCart);
+      console.log("medicine is", medicine);
+    } else {
+      console.log("cart is existing");
+      cart.quantity++;
+      await cart.save();
+    }
+  }
+
+  async getCartProductsRepo(userId:string){
+    const result = await cartCollection.find({userid:userId})
+    console.log('respot is',result)
     if(!result){
       return null
     }

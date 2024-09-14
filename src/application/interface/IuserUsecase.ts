@@ -1,6 +1,7 @@
 import { returnUser } from "../../domain/entities/returnUser";
 import { registerUser } from "../../domain/entities/signUpUser";
 import { IAppointment, IDoctor } from "../../infastructure/database/model/appoinments";
+import { IMedicine } from "../../infastructure/database/model/medicines";
 import {UserDocument} from '../../infastructure/database/model/userModel'
 
 export interface UserLogin{
@@ -23,4 +24,10 @@ export interface IuserUsecase {
     googleRetriveData(user:any): Promise<any|null>
     savingAppoinments(selectedDoctor:IDoctor,Date:string,Time:string,user:IAppointment,appointmentType:string): Promise<any|null>
     findBookedDoctors(): Promise<any>
+    cancelBooking(cancelDoctor:string): Promise<any | null>
+    appointmentAccepted(doctorEmail:string,userEmail:string): Promise<boolean | null>
+    appointmentRejected(doctorEmail:string,userEmail:string): Promise<boolean | null>
+    medicines(): Promise<any | null>
+    addToCart(userId:string,medicineId:string): Promise<any | null>
+    getCartProducts(userId:string): Promise<any | null>
 }

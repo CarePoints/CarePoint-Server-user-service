@@ -1,5 +1,6 @@
 import { registerUser } from '../../domain/entities/signUpUser';
 import { IAppointment, IDoctor } from '../database/model/appoinments';
+import { IMedicine } from '../database/model/medicines';
 import {UserDocument} from '../database/model/userModel';
 
 export interface UserLoginResponse {
@@ -20,4 +21,11 @@ export interface IUserRepository {
     passwordReseted(email:string, password:string): Promise<Boolean| null>
     savingAppoinmentsDB(selectedDoctor:IDoctor,Date:string,Time:string,user:IAppointment,appointmentType:string): Promise<Boolean | any | null>
     getBookedDoctors(): Promise<any|null>
+    cancelBookingRepo(cancelDoctor:string): Promise<any | null>
+    appointmentAcceptedRepo(doctorEmail:string,userEmail:string): Promise<boolean| null>
+    appointmentRejected(doctorEmail:string,userEmail:string): Promise<boolean| null>
+    addMedicines(file:any,productData:any): Promise<void| null>
+    medicinesRepo(): Promise<any| null>
+    addToCartRepo(userId:string,medicineId:string): Promise<any| null>
+    getCartProductsRepo(userId:string): Promise<any| null>
 }

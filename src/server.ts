@@ -12,6 +12,9 @@ import { setupRabbitMQ } from "./infastructure/rabitMQ/producer";
 import { connectToRabbitMQ } from "./infastructure/rabitMQ/consumer";
 import { errorMiddleware } from "../src/middleware/errorMiddleware"; 
 import { setupRabbitMQForAppoinment } from "./infastructure/rabitMQ/appoinmentProducer";
+import { connectToRabbitMQForAddProudcts } from "./infastructure/rabitMQ/addProductsConsumer";
+import { connectToRabbitMQForUserData } from "./infastructure/rabitMQ/fetchingUserDataConsumer";
+import { setupRabbitMQForUserId } from "./infastructure/rabitMQ/fetchingUserDataProducer";
 
 database();
 passportConfig()
@@ -45,8 +48,13 @@ setupRabbitMQ((channel) => {
 setupRabbitMQForAppoinment((channel) => {
   console.log('RabbitMQ is set up and ready.');
 });
+setupRabbitMQForUserId((channel) => {
+  console.log('RabbitMQ is set up and ready.');
+});
 
 connectToRabbitMQ('Queue2')
+connectToRabbitMQForAddProudcts('productsQueue')
+connectToRabbitMQForUserData('userDataQueue')
 
 app.listen(PORT, () => {
   console.log(`server is runnign ${PORT}`);

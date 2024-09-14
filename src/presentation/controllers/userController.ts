@@ -183,6 +183,7 @@ export class UserController {
     try{
       const {selectedDoctor,Date,Time,appointmentType,user} = req.body;
       let userData = JSON.parse( user)
+      console.log('jjjjjjjj',userData)
       const result = await this.userUsecase.savingAppoinments(selectedDoctor,Date,Time,userData,appointmentType)
       if(!result){
         return res.status(400).json({message:'Appoinment failed'})
@@ -219,4 +220,99 @@ export class UserController {
       console.log('error is',error);
     }
   }
+  async cancelBooking(req: Request, res: Response) {
+    try {
+      console.log('Request body:', req.body);
+      const { cancelDoctor } = req.body;
+  
+      if (!cancelDoctor) {
+        return res.status(400).json({ message: 'Cancel doctor information is missing' });
+      }
+  
+      const result = await this.userUsecase.cancelBooking(cancelDoctor);
+  
+      return res.status(200).json({ message: 'Success', result });
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async appointmentAccepted(req: Request, res: Response) {
+    try {
+      console.log('Request body:', req.body);
+      const { doctorEmail,userEmail } = req.body;
+  
+      if (!doctorEmail) {
+        return res.status(400).json({ message: 'doctorEmail is missing' });
+      }
+      if (!userEmail) {
+        return res.status(400).json({ message: 'userId is missing' });
+      }
+  
+      const result = await this.userUsecase.appointmentAccepted(doctorEmail,userEmail);
+  
+      return res.status(200).json({ message: 'Success', result });
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async appointmentRejected(req: Request, res: Response) {
+    try {
+      console.log('Request body:', req.body);
+      const { doctorEmail,userEmail } = req.body;
+  
+      if (!doctorEmail) {
+        return res.status(400).json({ message: 'doctorEmail is missing' });
+      }
+      if (!userEmail) {
+        return res.status(400).json({ message: 'userId is missing' });
+      }
+  
+      const result = await this.userUsecase.appointmentRejected(doctorEmail,userEmail);
+  
+      return res.status(200).json({ message: 'Success', result });
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  
+  async medicines(req: Request, res: Response) {
+    try {
+     const medicines = await this.userUsecase.medicines()
+     console.log('medicinessssssssssss',medicines)
+      return res.status(200).json({ message: 'Success',result:medicines });
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async addToCart(req: Request, res: Response) {
+    try {
+      console.log('addToCart',req.body)
+      const {userId,medicineId} = req.body;
+       const medicines = await this.userUsecase.addToCart(userId,medicineId)
+
+      return res.status(200).json({ message: 'Success',medicines });
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async getCartProducts(req: Request, res: Response) {
+    try {
+      console.log('getCartProducts')
+      let {user} = req.body;
+      const parseUser = JSON.parse(user)
+      let userId = parseUser._id
+       const medicines = await this.userUsecase.getCartProducts(userId)
+
+      return res.status(200).json({ message: 'Success',medicines});
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  
 }

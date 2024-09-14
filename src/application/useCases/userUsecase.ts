@@ -113,6 +113,7 @@ export class UserUsecase implements IuserUsecase {
   }
 
   async savingAppoinments(selectedDoctor:IDoctor,Date:string,Time:string,user:IAppointment,appointmentType:string){
+    console.log('user real user is', user)
     const result = await this.repository.savingAppoinmentsDB(selectedDoctor,Date,Time,user,appointmentType);
     publishMessageForAppoinment(selectedDoctor,Date,Time,user,appointmentType)
     if(!result){
@@ -124,4 +125,45 @@ export class UserUsecase implements IuserUsecase {
     const result = await this.repository.getBookedDoctors();
     return result
   }
+
+  async cancelBooking(cancelDoctor:string){
+    const result = await this.repository.cancelBookingRepo(cancelDoctor)
+    return null
+  }
+  async appointmentAccepted(doctorEmail:string,userEmail:string){
+    const result = await this.repository.appointmentAcceptedRepo(doctorEmail,userEmail)
+    if(!result){
+      return false
+    }
+    return true
+  }
+  async appointmentRejected(doctorEmail:string,userEmail:string){
+    const result = await this.repository.appointmentRejected(doctorEmail,userEmail)
+    if(!result){
+      return false
+    }
+    return true
+  }
+  async medicines(){
+    const result = await this.repository.medicinesRepo()
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async addToCart(userId:string,medicineId:string){
+    const result = await this.repository.addToCartRepo(userId,medicineId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async getCartProducts(userId:string){
+    const result = await this.repository.getCartProductsRepo(userId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+
 }

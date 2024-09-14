@@ -40,6 +40,12 @@ router.post("/resetPassword", controller.resetPassword.bind(controller));
 router.post('/appoinments', controller.appoinments.bind(controller))
 router.post('/payments', controller.razorpayPayments.bind(controller))
 router.get('/bookedDoctors', controller.bookedDoctors.bind(controller))
+router.post('/cancelBooking', controller.cancelBooking.bind(controller))
+router.post('/appointmentAccepted', controller.appointmentAccepted.bind(controller))
+router.post('/appointmentRejected', controller.appointmentRejected.bind(controller))
+router.get('/medicines', controller.medicines.bind(controller))
+router.post('/add-to-cart', controller.addToCart.bind(controller))
+router.post('/getCartProducts', controller.getCartProducts.bind(controller))
 
 
 
