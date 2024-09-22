@@ -7,6 +7,7 @@ import { publishMessage } from "../../infastructure/rabitMQ/producer";
 import { generateToken } from "../../utils/authUtlis";
 import { IAppointment, IDoctor } from "../../infastructure/database/model/appoinments";
 import { publishMessageForAppoinment } from "../../infastructure/rabitMQ/appoinmentProducer";
+import { Address, IOrder } from "../../infastructure/database/model/orderSchema";
 
 export class UserUsecase implements IuserUsecase {
   private repository: IUserRepository;
@@ -160,6 +161,36 @@ export class UserUsecase implements IuserUsecase {
   }
   async getCartProducts(userId:string){
     const result = await this.repository.getCartProductsRepo(userId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async updateQuantity(userId:string,productId:string,quantity:string){
+    const result = await this.repository.updateQuantityRepo(userId,productId,quantity)
+    if(!result){
+      return null
+    }
+    return result
+  }
+
+  async removeItem(productId:string){
+    console.log('removeItem',productId);
+    const result = await this.repository.removeItemRepo(productId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async cartProducts(userId:string){
+    const result = await this.repository.cartProductsRepo(userId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async productsOrders(userID:string,cartItems:IOrder[],formData:Address){
+    const result = await this.repository.productsOrdersRepo(userID,cartItems,formData)
     if(!result){
       return null
     }

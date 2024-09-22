@@ -2,6 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { IuserUsecase } from "../../application/interface/IuserUsecase";
 import { generateToken } from "../../utils/authUtlis";
 import Razorpay from "razorpay";
+import Tesseract from "tesseract.js";
+import { error, info } from "console";
+import { text } from "stream/consumers";
 
 export class UserController {
   private userUsecase: IuserUsecase;
@@ -281,7 +284,6 @@ export class UserController {
   async medicines(req: Request, res: Response) {
     try {
      const medicines = await this.userUsecase.medicines()
-     console.log('medicinessssssssssss',medicines)
       return res.status(200).json({ message: 'Success',result:medicines });
     } catch (error) {
       console.log('Error:', error);
@@ -313,6 +315,101 @@ export class UserController {
       console.log('Error:', error);
       return res.status(500).json({ message: 'An error occurred', error });
     }
+  }
+  async updateQuantity(req: Request, res: Response) {
+    try {
+      console.log('updateQuantity2')
+      let {userId,productId,quantity} = req.body;
+
+       const medicines = await this.userUsecase.updateQuantity(userId,productId, quantity)
+       if(!medicines){
+        return res.status(404).json({message: "Item not found"})
+       }
+
+      return res.status(200).json({ message: 'Success',medicines});
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async removeItem(req: Request, res: Response) {
+    try {
+      let {productId} = req.body;
+      console.log('removeItem',productId)
+
+       const medicines = await this.userUsecase.removeItem(productId)
+       if(!medicines){
+        return res.status(404).json({message: "Item not found"})
+       }
+
+      return res.status(200).json({ message: 'Success',medicines});
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async cartProducts(req: Request, res: Response) {
+    try {
+      let {userID} = req.body;
+      console.log('userID',userID)
+
+       const medicines = await this.userUsecase.cartProducts(userID)
+       if(!medicines){
+        return res.status(404).json({message: "Item not found in controller"})
+       }
+
+      return res.status(200).json({ message: 'Success', medicines});
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+  async productsOrders(req: Request, res: Response) {
+    try {
+      let {userID,cartItems,formData} = req.body;
+
+       const orderData = await this.userUsecase.productsOrders(userID,cartItems,formData)
+       if(!orderData){
+        return res.status(404).json({message: "Item not found in controller"})
+       }
+
+      return res.status(200).json({ message: 'Success', orderData});
+    } catch (error) {
+      console.log('Error:', error);
+      return res.status(500).json({ message: 'An error occurred', error });
+    }
+  }
+
+
+  
+
+  async prescription(req:Request, res:Response) {
+    const { photo } = req.body; // Get the Base64 image data from the request body
+
+  if (!photo) {
+    return res.status(400).send('No image data received');
+  }
+
+  // Extract the base64 image part (remove the data:image/png;base64, part)
+  const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
+
+  // Buffer the image data
+  const imageBuffer = Buffer.from(base64Data, 'base64');
+
+  try {
+    // Use Tesseract to recognize the text in the image
+    const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
+      logger: (info) => console.log(info), // Optional logger
+    });
+
+    console.log('Extracted text:', text);
+
+    // Send the extracted text as a response
+    return res.status(200).json({ extractedText: text });
+  } catch (error) {
+    console.error('Error during OCR:', error);
+    return res.status(500).send('Error during OCR processing');
+  }
   }
   
 }

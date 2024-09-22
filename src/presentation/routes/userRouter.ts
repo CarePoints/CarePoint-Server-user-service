@@ -6,6 +6,7 @@ import { UserUsecase } from "../../application/useCases/userUsecase";
 import { UserController } from "../controllers/userController";
 import authenticationToken from "../../utils/authMiddleware";
 import passport from "passport";
+import { uploadSingleImage } from "../../middleware/uploadMiddleware";
 
 const repository = new UserRepository();
 const user = new UserUsecase(repository);
@@ -46,6 +47,11 @@ router.post('/appointmentRejected', controller.appointmentRejected.bind(controll
 router.get('/medicines', controller.medicines.bind(controller))
 router.post('/add-to-cart', controller.addToCart.bind(controller))
 router.post('/getCartProducts', controller.getCartProducts.bind(controller))
+router.post('/updateQuantity', controller.updateQuantity.bind(controller))
+router.post('/removeItem', controller.removeItem.bind(controller))
+router.post('/cartProducts', controller.cartProducts.bind(controller))
+router.post('/productsOrders', controller.productsOrders.bind(controller))
+router.post('/upload',uploadSingleImage, controller.prescription.bind(controller))
 
 
 

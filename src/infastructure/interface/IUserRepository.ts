@@ -1,6 +1,7 @@
 import { registerUser } from '../../domain/entities/signUpUser';
 import { IAppointment, IDoctor } from '../database/model/appoinments';
 import { IMedicine } from '../database/model/medicines';
+import { Address, IOrder } from '../database/model/orderSchema';
 import {UserDocument} from '../database/model/userModel';
 
 export interface UserLoginResponse {
@@ -28,4 +29,8 @@ export interface IUserRepository {
     medicinesRepo(): Promise<any| null>
     addToCartRepo(userId:string,medicineId:string): Promise<any| null>
     getCartProductsRepo(userId:string): Promise<any| null>
+    updateQuantityRepo(userId:string,productId:string,quantity:string): Promise<any| null>
+    removeItemRepo(productId:string): Promise<any| null>
+    cartProductsRepo(userId:string): Promise<any| null>
+    productsOrdersRepo(userID:string,cartItems:IOrder[],formData:Address): Promise<any| null>
 }

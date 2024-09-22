@@ -2,6 +2,7 @@ import { returnUser } from "../../domain/entities/returnUser";
 import { registerUser } from "../../domain/entities/signUpUser";
 import { IAppointment, IDoctor } from "../../infastructure/database/model/appoinments";
 import { IMedicine } from "../../infastructure/database/model/medicines";
+import { Address, IOrder } from "../../infastructure/database/model/orderSchema";
 import {UserDocument} from '../../infastructure/database/model/userModel'
 
 export interface UserLogin{
@@ -30,4 +31,8 @@ export interface IuserUsecase {
     medicines(): Promise<any | null>
     addToCart(userId:string,medicineId:string): Promise<any | null>
     getCartProducts(userId:string): Promise<any | null>
+    updateQuantity(userId:string,productId:string,quantity:string): Promise<any | null>
+    removeItem(productId:string): Promise<any | null>
+    cartProducts(userId:string): Promise<any | null>
+    productsOrders(userID:string,cartItems:IOrder[],formData:Address): Promise<any | null>
 }

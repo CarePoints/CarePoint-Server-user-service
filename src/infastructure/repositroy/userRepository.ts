@@ -15,7 +15,8 @@ import Appointment, {
 } from "../database/model/appoinments";
 import Medicine, { IMedicine } from "../database/model/medicines";
 import cartCollection from "../database/model/cart";
-import products from "razorpay/dist/types/products";
+import Order, { Address, IOrder } from "../database/model/orderSchema";
+import mongoose from "mongoose";
 
 export class UserRepository implements IUserRepository {
   async findUserExists(email: string) {
@@ -389,7 +390,6 @@ export class UserRepository implements IUserRepository {
 
   async medicinesRepo() {
     const result = await Medicine.find();
-    console.log("get result is ", result);
     if (!result) return null;
     return result;
   }
@@ -430,12 +430,197 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async getCartProductsRepo(userId:string){
-    const result = await cartCollection.find({userid:userId})
-    console.log('respot is',result)
-    if(!result){
-      return null
+  async getCartProductsRepo(userId: string) {
+    const result = await cartCollection.find({ userid: userId });
+    if (!result) {
+      return null;
     }
-    return result
+    return result;
   }
+  async updateQuantityRepo(
+    userId: string,
+    productId: string,
+    quantity: string
+  ) {
+    // const result = await cartCollection.find({userid:userId})
+    console.log("userId is", userId);
+    console.log("productId is", productId);
+    console.log("quantity is", quantity);
+    const result = await cartCollection.findOne({
+      userid: userId,
+      productid: productId,
+    });
+    if (result) {
+      result.quantity = Number(quantity);
+      const price = result.price;
+      let totalAmount = price * Number(quantity);
+      result.totalPrice = totalAmount;
+      await result.save();
+      return result;
+    }
+    return null;
+  }
+  async removeItemRepo(productId: string) {
+    try {
+      console.log("productId is", productId);
+
+      const result = await cartCollection.findOneAndDelete({ _id: productId });
+
+      if (result) {
+        console.log("Item successfully deleted:", result);
+        return result;
+      } else {
+        console.log("Item not found for deletion");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
+  async cartProductsRepo(userId: string) {
+    try {
+
+      const result = await cartCollection.find({ userid: userId });
+
+      if (result) {
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
+  // async productsOrdersRepo(userID: string, cartItems: any, formData: Address) {
+  //   try {
+  //     // Check if any of the products in the cart already exist in the user's orders
+  //     const existingOrder = await Order.findOne({
+  //       userid: userID,
+  //       "products.productid": { $in: cartItems.map((item: any) => item.productid) }
+  //     });
+  
+  //     if (!existingOrder) {
+  //       const totalPrice = cartItems.reduce(
+  //         (sum: any, item: any) => sum + item.totalPrice,
+  //         0
+  //       );
+  
+  //       const totalQuantity = cartItems.reduce(
+  //         (sum: any, item: any) => sum + item.quantity,
+  //         0
+  //       );
+  
+  //       const cartData = cartItems.map((item: any) => ({
+  //         productid: item.productid,
+  //         productName: item.productName,
+  //         quantity: item.quantity,
+  //         price: item.price,
+  //         status: item.status || "Pending",
+  //       }));
+  
+  //       console.log("cartData", cartData);
+  
+  //       const newOrder = new Order({
+  //         userid: userID,
+  //         products: cartData,
+  //         totalQuantity: totalQuantity,
+  //         totalPrice: totalPrice,
+  //         address: {
+  //           userName: formData.name,
+  //           country: formData.country,
+  //           address: formData.address,
+  //           city: formData.city,
+  //           zipCode: formData.zipCode,
+  //         },
+  //         paymentMethod: "Credit Card",
+  //       });
+  
+  //       await newOrder.save();
+  //       console.log('Order saved');
+  
+  //       const result = await cartCollection.deleteMany({ userid: userID });
+  //       console.log('Cart deleted', result);
+  
+  //       return newOrder;
+  //     } else {
+  //       console.log("Order with these products already exists for this user:", existingOrder);
+  //       return existingOrder;
+  //     }
+  //   } catch (error) {
+  //     console.error("Error while processing order:", error);
+  //     return null;
+  //   }
+  // }
+
+  async productsOrdersRepo(userID: string, cartItems: any, formData: Address) {
+    const session = await mongoose.startSession();  // Start a transaction session
+    session.startTransaction();  // Ensure atomicity for the operations
+  
+    try {
+      // Calculate total price and quantity
+      const totalPrice = cartItems.reduce(
+        (sum: any, item: any) => sum + item.totalPrice,
+        0
+      );
+  
+      const totalQuantity = cartItems.reduce(
+        (sum: any, item: any) => sum + item.quantity,
+        0
+      );
+  
+      // Prepare the cart data for the order
+      const cartData = cartItems.map((item: any) => ({
+        productid: item.productid,
+        productName: item.productName,
+        quantity: item.quantity,
+        price: item.price,
+        status: item.status || "Pending",
+      }));
+  
+      console.log("cartData", cartData);
+  
+      // Create a new order
+      const newOrder = new Order({
+        userid: userID,
+        products: cartData,
+        totalQuantity: totalQuantity,
+        totalPrice: totalPrice,
+        address: {
+          userName: formData.name,
+          country: formData.country,
+          address: formData.address,
+          city: formData.city,
+          zipCode: formData.zipCode,
+        },
+        paymentMethod: "Credit Card",
+      });
+  
+      await newOrder.save({ session });  // Save the order within the transaction
+      console.log('Order saved');
+  
+      // Delete the user's cart items after successful order creation
+      await cartCollection.deleteMany({ userid: userID }, { session });
+      console.log('Cart deleted');
+  
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+  
+      return newOrder;
+  
+    } catch (error) {
+      console.error("Error while processing order:", error);
+  
+      // Rollback the transaction in case of error
+      await session.abortTransaction();
+      session.endSession();
+  
+      return null;
+    }
+  }
+  
+  
 }
