@@ -2,9 +2,12 @@ import { NextFunction, Request, Response } from "express";
 import { IuserUsecase } from "../../application/interface/IuserUsecase";
 import { generateToken } from "../../utils/authUtlis";
 import Razorpay from "razorpay";
-import Tesseract from "tesseract.js";
 import { error, info } from "console";
 import { text } from "stream/consumers";
+import Tesseract from 'tesseract.js';
+import pdfParse from 'pdf-parse';
+import { extractPrescriptionData } from "../../utils/extractMedicationNames";
+
 
 export class UserController {
   private userUsecase: IuserUsecase;
@@ -380,36 +383,135 @@ export class UserController {
     }
   }
 
+  async prescription(req: Request, res: Response) {
+    const file = req.file; 
 
-  
+    if (!file) {
+        console.log('No file data received');
+        return res.status(400).send('No file data received');
+    }
 
-  async prescription(req:Request, res:Response) {
-    const { photo } = req.body; // Get the Base64 image data from the request body
+    if (file.mimetype === 'application/pdf') {
 
-  if (!photo) {
-    return res.status(400).send('No image data received');
-  }
+        const pdfBuffer = file.buffer; 
+        try {
+        
+            const data = await pdfParse(pdfBuffer);
 
-  // Extract the base64 image part (remove the data:image/png;base64, part)
-  const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
+            const medication = extractPrescriptionData(data.text);
+            console.log('Extracted :', data.text);
+            console.log('Extracted Medication:', medication);
+            // const extractedText = {
 
-  // Buffer the image data
-  const imageBuffer = Buffer.from(base64Data, 'base64');
+            // }
+           
 
+            return res.status(200).json({ extractedText: medication });
+        } catch (error) {
+            console.error('Error during PDF processing:', error);
+            return res.status(500).send('Error during PDF processing');
+        }
+    } else if (file.mimetype.startsWith('image/')) {
+        // Handle image processing if necessary
+        const imageBuffer = file.buffer; // Read the image file buffer
+
+        try {
+            // Use Tesseract or any other method to recognize text in the image
+            const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
+                logger: (info) => console.log(info), // Optional logger
+            });
+
+            console.log('Extracted text from image:', text);
+
+            // Send the extracted text from the image as a response
+            return res.status(200).json({ extractedText: text });
+        } catch (error) {
+            console.error('Error during OCR:', error);
+            return res.status(500).send('Error during OCR processing');
+        }
+    } else {
+        return res.status(400).send('Unsupported file format');
+    }
+}
+
+async orderData(req: Request, res: Response) {
   try {
-    // Use Tesseract to recognize the text in the image
-    const { data: { text } } = await Tesseract.recognize(imageBuffer, 'eng', {
-      logger: (info) => console.log(info), // Optional logger
-    });
+    let {userId} = req.body;
+    console.log('userID',userId)
+    
+     const medicines = await this.userUsecase.orderData(userId)
+     console.log('medicines',medicines)
+     if(!medicines){
+      return res.status(404).json({message: "Item not found in controller"})
+     }
 
-    console.log('Extracted text:', text);
-
-    // Send the extracted text as a response
-    return res.status(200).json({ extractedText: text });
+    return res.status(200).json({ message: 'Success', medicines});
   } catch (error) {
-    console.error('Error during OCR:', error);
-    return res.status(500).send('Error during OCR processing');
+    console.log('Error:', error);
+    return res.status(500).json({ message: 'An error occurred', error });
   }
+}
+async getAdminOrderData(req: Request, res: Response) {
+  try {
+
+    
+     const medicines = await this.userUsecase.getAdminOrderData()
+     console.log('medicines',medicines)
+     if(!medicines){
+      return res.status(404).json({message: "Item not found in controller"})
+     }
+
+    return res.status(200).json({ message: 'Success', medicines});
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(500).json({ message: 'An error occurred', error });
   }
+}
+async updateStatus(req: Request, res: Response) {
+  try {
+    let {orderId,status} = req.body;
+    
+     const result = await this.userUsecase.updateStatus(orderId,status)
+     if(!result){
+      return res.status(404).json({message: "Item not found in controller"})
+     }
+
+    return res.status(200).json({ message: 'Success', result});
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(500).json({ message: 'An error occurred', error });
+  }
+}
+async deleteOrder(req: Request, res: Response) {
+  try {
+    let {orderId} = req.body;
+    
+     const result = await this.userUsecase.deleteOrder(orderId)
+     if(!result){
+      return res.status(404).json({message: "Item not found in controller"})
+     }
+
+    return res.status(200).json({ message: 'Success', result});
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(500).json({ message: 'An error occurred', error });
+  }
+}
+async orderCancel(req: Request, res: Response) {
+  try {
+    let {orderId} = req.body;
+    console.log('order is cancelled', orderId)
+    
+     const result = await this.userUsecase.orderCancel(orderId)
+     if(!result){
+      return res.status(404).json({message: "Item not found in controller"})
+     }
+
+    return res.status(200).json({ message: 'Success', result});
+  } catch (error) {
+    console.log('Error:', error);
+    return res.status(500).json({ message: 'An error occurred', error });
+  }
+}
   
 }

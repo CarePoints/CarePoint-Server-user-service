@@ -196,5 +196,40 @@ export class UserUsecase implements IuserUsecase {
     }
     return result
   }
-
+  
+  async orderData(userId:string){
+    const result = await this.repository.orderDataRepo(userId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async getAdminOrderData(){
+    const result = await this.repository.getAdminOrderDataRepo()
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async  updateStatus(orderId:string,status:string){
+    const result = await this.repository.updateStatusRepo(orderId,status)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async deleteOrder(orderId:string){
+    const result = await this.repository.deleteOrderRepo(orderId)
+    if(!result){
+      return null
+    }
+    return result
+  }
+  async orderCancel(orderId:string){
+    const result = await this.repository.orderCancelRepo(orderId)
+    if(!result){
+      return null
+    }
+    return result
+  }
 }

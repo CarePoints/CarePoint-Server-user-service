@@ -31,6 +31,11 @@ export interface IUserRepository {
     getCartProductsRepo(userId:string): Promise<any| null>
     updateQuantityRepo(userId:string,productId:string,quantity:string): Promise<any| null>
     removeItemRepo(productId:string): Promise<any| null>
-    cartProductsRepo(userId:string): Promise<any| null>
+    cartProductsRepo(userId:string): Promise<any| null> 
     productsOrdersRepo(userID:string,cartItems:IOrder[],formData:Address): Promise<any| null>
+    orderDataRepo(userId:string): Promise<any| null> 
+    getAdminOrderDataRepo(): Promise<any| null> 
+    updateStatusRepo(orderId:string,status:string): Promise<any | null>
+    deleteOrderRepo(orderId:string): Promise<any | null>
+    orderCancelRepo(orderId:string): Promise<any | null>
 }

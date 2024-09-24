@@ -33,7 +33,7 @@ import {
         channel.consume(queue,async (msg: any | null) => {
           if (msg) {
             const receivedData = JSON.parse(msg.content.toString());
-            console.log(`Received message in ${queue}:`, receivedData);
+            console.log(`Received message in ${queue}:for add product Consumer`, receivedData);
             const repositroy = new UserRepository();
             const {file,productData} = receivedData
             repositroy.addMedicines(file,productData)

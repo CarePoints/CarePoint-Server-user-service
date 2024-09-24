@@ -494,67 +494,7 @@ export class UserRepository implements IUserRepository {
       return null;
     }
   }
-  // async productsOrdersRepo(userID: string, cartItems: any, formData: Address) {
-  //   try {
-  //     // Check if any of the products in the cart already exist in the user's orders
-  //     const existingOrder = await Order.findOne({
-  //       userid: userID,
-  //       "products.productid": { $in: cartItems.map((item: any) => item.productid) }
-  //     });
   
-  //     if (!existingOrder) {
-  //       const totalPrice = cartItems.reduce(
-  //         (sum: any, item: any) => sum + item.totalPrice,
-  //         0
-  //       );
-  
-  //       const totalQuantity = cartItems.reduce(
-  //         (sum: any, item: any) => sum + item.quantity,
-  //         0
-  //       );
-  
-  //       const cartData = cartItems.map((item: any) => ({
-  //         productid: item.productid,
-  //         productName: item.productName,
-  //         quantity: item.quantity,
-  //         price: item.price,
-  //         status: item.status || "Pending",
-  //       }));
-  
-  //       console.log("cartData", cartData);
-  
-  //       const newOrder = new Order({
-  //         userid: userID,
-  //         products: cartData,
-  //         totalQuantity: totalQuantity,
-  //         totalPrice: totalPrice,
-  //         address: {
-  //           userName: formData.name,
-  //           country: formData.country,
-  //           address: formData.address,
-  //           city: formData.city,
-  //           zipCode: formData.zipCode,
-  //         },
-  //         paymentMethod: "Credit Card",
-  //       });
-  
-  //       await newOrder.save();
-  //       console.log('Order saved');
-  
-  //       const result = await cartCollection.deleteMany({ userid: userID });
-  //       console.log('Cart deleted', result);
-  
-  //       return newOrder;
-  //     } else {
-  //       console.log("Order with these products already exists for this user:", existingOrder);
-  //       return existingOrder;
-  //     }
-  //   } catch (error) {
-  //     console.error("Error while processing order:", error);
-  //     return null;
-  //   }
-  // }
-
   async productsOrdersRepo(userID: string, cartItems: any, formData: Address) {
     const session = await mongoose.startSession();  // Start a transaction session
     session.startTransaction();  // Ensure atomicity for the operations
@@ -621,6 +561,85 @@ export class UserRepository implements IUserRepository {
       return null;
     }
   }
+  async orderDataRepo(userId: string) {
+    try {
+      const result = await Order.find({ userid: userId });
+      if (result) {
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
+  async getAdminOrderDataRepo() {
+    try {
+      const result = await Order.find();
+      if (result) {
+        console.log("Item found",result);
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
+  async updateStatusRepo(orderId:string,status:string) {
+    try {
+      const result = await Order.findById({_id:orderId});
+      if (result) {
+        result.status = status;
+       await result.save()
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
+  async deleteOrderRepo(orderId:string) {
+    try {
+      const result = await Order.findByIdAndDelete({_id:orderId});
+
+      // await result.save()
+      if (result) {
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
   
+  async orderCancelRepo(orderId:string) {
+    try {
+      console.log('orderCancelRepo', orderId)
+      const result = await Order.findById({_id:orderId});
+      
+      if (result) {
+        result.status = 'Cancelled';
+        await result.save()
+        return result;
+      } else {
+        console.log("Item not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error while deleting item:", error);
+      return null;
+    }
+  }
   
 }

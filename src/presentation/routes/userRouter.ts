@@ -6,8 +6,9 @@ import { UserUsecase } from "../../application/useCases/userUsecase";
 import { UserController } from "../controllers/userController";
 import authenticationToken from "../../utils/authMiddleware";
 import passport from "passport";
-import { uploadSingleImage } from "../../middleware/uploadMiddleware";
-
+import { uploadSingleFile } from "../../middleware/uploadMiddleware";
+import multer from 'multer'
+const upload = multer()
 const repository = new UserRepository();
 const user = new UserUsecase(repository);
 const controller = new UserController(user);
@@ -51,8 +52,12 @@ router.post('/updateQuantity', controller.updateQuantity.bind(controller))
 router.post('/removeItem', controller.removeItem.bind(controller))
 router.post('/cartProducts', controller.cartProducts.bind(controller))
 router.post('/productsOrders', controller.productsOrders.bind(controller))
-router.post('/upload',uploadSingleImage, controller.prescription.bind(controller))
-
+router.post('/upload',upload.single('file'), controller.prescription.bind(controller))
+router.post('/orderData', controller.orderData.bind(controller))
+router.get('/getAdminOrderData', controller.getAdminOrderData.bind(controller))
+router.post('/updateStatus', controller.updateStatus.bind(controller))
+router.post('/deleteOrder', controller.deleteOrder.bind(controller))
+router.post('/orderCancel', controller.orderCancel.bind(controller))
 
 
 export default router;

@@ -53,7 +53,8 @@ setupRabbitMQForUserId((channel) => {
 });
 
 connectToRabbitMQ('Queue2')
-connectToRabbitMQForAddProudcts('productsQueue')
+connectToRabbitMQForAddProudcts('Queue2')
+// connectToRabbitMQForAddProudcts('productsQueue')
 connectToRabbitMQForUserData('userDataQueue')
 
 app.listen(PORT, () => {

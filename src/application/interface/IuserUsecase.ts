@@ -35,4 +35,10 @@ export interface IuserUsecase {
     removeItem(productId:string): Promise<any | null>
     cartProducts(userId:string): Promise<any | null>
     productsOrders(userID:string,cartItems:IOrder[],formData:Address): Promise<any | null>
+    orderData(userId:string): Promise<any | null>
+    getAdminOrderData(): Promise<any | null>
+    updateStatus(orderId:string,status:string): Promise<any | null>
+    deleteOrder(orderId:string): Promise<any | null>
+    orderCancel(orderId:string): Promise<any | null>
+
 }

@@ -34,7 +34,13 @@ export const connectToRabbitMQ = (queue: string) => {
       channel.consume(queue,async (msg: any | null) => {
         if (msg) {
           const receivedData = JSON.parse(msg.content.toString());
-          console.log(`Received message in ${queue}:`, receivedData);
+          console.log(`Received message in ${queue}:for user data`, receivedData);
+          if(receivedData.file){
+            const repositroy = new UserRepository();
+            const {file,productData} = receivedData
+            repositroy.addMedicines(file,productData)
+          }
+
           if (receivedData) {
             const userData = new UserRepository();
             const result = await userData.isBlockDb(
