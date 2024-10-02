@@ -7,7 +7,7 @@ import {
 } from "amqplib/callback_api";
 import { UserRepository } from '../repositroy/userRepository';
 
-const amqpUrl: string = "amqp://localhost";
+const amqpUrl: string = "amqp://172.29.64.1";
 const queueName: string = "Queue2"; // Unique name for each consumer's queue
 const exchangeName: string = "Users";
 const routingKey: string = "Users";

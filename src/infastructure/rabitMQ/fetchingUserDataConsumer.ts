@@ -8,7 +8,7 @@ import {
   import { UserRepository } from '../repositroy/userRepository';
 import { publishMessageForUserId } from "./fetchingUserDataProducer";
   
-  const amqpUrl: string = "amqp://localhost";
+  const amqpUrl: string = "amqp://172.29.64.1";
   const exchangeName: string = "userEmail";
   const routingKey: string = "userEmail";
   

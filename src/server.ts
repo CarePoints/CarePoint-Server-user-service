@@ -4,17 +4,17 @@ import cors from "cors";
 dotenv.config();
 import database from "./config/database/connection";
 import router from "./presentation/routes/userRouter";
-import passportConfig from "../src/auth/passport";
+import passportConfig from "./auth/passport";
 import passport from "passport";
 import session from "express-session";
 import runProducer from "./infastructure/kafka/producer";
 import { setupRabbitMQ } from "./infastructure/rabitMQ/producer";
 import { connectToRabbitMQ } from "./infastructure/rabitMQ/consumer";
-import { errorMiddleware } from "../src/middleware/errorMiddleware"; 
 import { setupRabbitMQForAppoinment } from "./infastructure/rabitMQ/appoinmentProducer";
 import { connectToRabbitMQForAddProudcts } from "./infastructure/rabitMQ/addProductsConsumer";
 import { connectToRabbitMQForUserData } from "./infastructure/rabitMQ/fetchingUserDataConsumer";
 import { setupRabbitMQForUserId } from "./infastructure/rabitMQ/fetchingUserDataProducer";
+import { errorMiddleware } from "./middleware/errorMiddleware";
 
 database();
 passportConfig()

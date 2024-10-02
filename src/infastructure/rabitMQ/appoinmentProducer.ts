@@ -3,7 +3,7 @@
 import { connect, Connection, Channel } from 'amqplib/callback_api';
 import { IAppointment, IDoctor } from '../database/model/appoinments';
 
-const amqpUrl: string = 'amqp://localhost';
+const amqpUrl: string = 'amqp://172.29.64.1';
 const exchangeName: string = 'appoinmentDetails';
 const routingKey: string = 'appoinment.data';
 

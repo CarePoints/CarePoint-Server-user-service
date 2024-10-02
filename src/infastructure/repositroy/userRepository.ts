@@ -7,7 +7,7 @@ import { hashPassword } from "../../utils/passwordUtils";
 import { registerUser } from "../../domain/entities/signUpUser";
 import { User } from "../database/model/userModel";
 import { IUserRepository } from "../interface/IUserRepository";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { AppError } from "../../middleware/errorMiddleware";
 import Appointment, {
   IAppointment,
